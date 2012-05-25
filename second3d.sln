@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "second3d", "second3d\second3d\second3d.csproj", "{DF082F73-1C28-46A6-9C38-60D57161CE6F}"
+EndProject
+Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "second3dContent", "second3d\second3dContent\second3dContent.contentproj", "{A3D60C45-F5D5-48E0-B08F-3BD8CEEE2B4A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DF082F73-1C28-46A6-9C38-60D57161CE6F}.Debug|x86.ActiveCfg = Debug|x86
+		{DF082F73-1C28-46A6-9C38-60D57161CE6F}.Debug|x86.Build.0 = Debug|x86
+		{DF082F73-1C28-46A6-9C38-60D57161CE6F}.Release|x86.ActiveCfg = Release|x86
+		{DF082F73-1C28-46A6-9C38-60D57161CE6F}.Release|x86.Build.0 = Release|x86
+		{A3D60C45-F5D5-48E0-B08F-3BD8CEEE2B4A}.Debug|x86.ActiveCfg = Debug|x86
+		{A3D60C45-F5D5-48E0-B08F-3BD8CEEE2B4A}.Release|x86.ActiveCfg = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

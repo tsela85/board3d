@@ -1,0 +1,9 @@
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\second3d.exe
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\second3d.pdb
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\obj\x86\Debug\ResolveAssemblyReference.cache
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\obj\x86\Debug\Microsoft.Xna.Framework.RuntimeProfile.txt
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\obj\x86\Debug\second3d.exe
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\obj\x86\Debug\second3d.pdb
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\effects.xnb
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\riemerstexture.xnb
+c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\images.xnb
