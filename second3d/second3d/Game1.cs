@@ -21,6 +21,7 @@
          private float angle = 0f;
          PolyTexture board;
          KeyboardState lstk;
+         MouseState last_ms;
 
          VertexPositionTexture[] vertices;
 
@@ -122,10 +123,17 @@
              MouseState ms = Mouse.GetState();
              Vector3 mouse = GetPickedPosition(new Vector2((float)ms.X, (float)ms.Y));
 
-             if (ms.LeftButton == ButtonState.Pressed)
+             if ((last_ms.LeftButton == ButtonState.Pressed) && ((ms.LeftButton == ButtonState.Released)))
              {
-                 board.collideWithEdge(mouse);
-
+                 if (board.temp < 2)
+                    board.collideWithEdge(mouse);
+                 if (board.temp == 2)
+                    board.update();
+             }
+             if ((last_ms.RightButton == ButtonState.Pressed) && ((ms.RightButton == ButtonState.Released)))
+             {
+                 if (board.temp == 3)
+                     board.temp = 0;
              }
              if (lstk.IsKeyDown(Keys.Left) && (keyState.IsKeyUp(Keys.Left)))
              {
@@ -134,7 +142,7 @@
                  //angle += 0.001f;
                  angle = 0.1f;
                  Matrix rotateMatrix = Matrix.CreateFromAxisAngle(vertices[1].Position - vertices[0].Position, angle);
-                 vertices[2].Position = Vector3.Transform(vertices[2].Position, rotateMatrix);
+                 vertices[2].Position = Vector3.Transform(vertices[2].Position, rotateMatrix);                 
 
 
              }
@@ -149,7 +157,7 @@
              // angle += ((direction == 0) ?  -0.00001f : 0.00001f);             
 
              lstk = keyState;
-
+             last_ms = ms;
              base.Update(gameTime);
          }
 
@@ -158,7 +166,7 @@
              device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
              RasterizerState rs = new RasterizerState();
              rs.CullMode = CullMode.None;
-             rs.FillMode = FillMode.WireFrame;
+            // rs.FillMode = FillMode.WireFrame;
              device.RasterizerState = rs;
 
 

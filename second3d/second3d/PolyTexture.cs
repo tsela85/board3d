@@ -9,12 +9,22 @@ namespace second3d
 {
     class PolyTexture
     {
+        public struct DividingVert {
+            public float distance;
+            public int small;
+            public int big;
+            public Vector3 position;
+        }
         private VertexPositionNormalTexture[] vertices;
         private short[] indices;
         int vertNum;      
         private Texture2D texture;
-        private Vector2 pointOnEdge;
+        private Vector3 pointOnEdge;
+        private Vector3 center;
+        private DividingVert[] p;
+        public int temp = 0;
         VertexPositionTexture[] ver;
+        public PolyTexture one, two;
 
 #region properties
 
@@ -34,7 +44,7 @@ namespace second3d
         
         public void Initialize(Texture2D tex, int vNum, Vector3[] points,Vector2[] texCords)
         {
-            pointOnEdge = Vector2.Zero;
+            pointOnEdge = Vector3.Zero;
             int iCount = (vNum - 3) * 3 + 3;
             vertNum = vNum;
             texture = tex;
@@ -51,50 +61,73 @@ namespace second3d
             short j = 0;
             for (short i = 0; i < iCount; i+=3)
             {
-                indices[i] = j;
-                indices[i+1] = (short)(j + 1);
-                indices[i + 2] = (short)((j + 2) % vNum);
+                indices[i] = (short)(j % vNum);
+                indices[i+1] = (short)((j + 1) % vNum);
+                indices[i + 2] = (short)(((j != 4 ? j : 5) + 2) % vNum);
                 j += 2;
-            }
+            }            
             ver = new VertexPositionTexture[3];
+            p = new DividingVert[2];
+
         }
 
         public void Draw(ref GraphicsDevice device)
         {
-            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
-                vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
-            
-            
-            device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
+
+            if (temp >= 2)
+            {
+                one.Draw(ref device);
+                two.Draw(ref device);
+                temp = 3;
+            }
+            else
+            {
+
+                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
+                    vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+                device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
+            }
         }
 
  #region Collision
-        public bool collideWithEdge(ref GraphicsDevice device,Matrix project,Matrix view, Matrix world, Vector2 point)
+        public bool collideWithEdge(Vector3 point)
         {
-            Vector3 one, two;
-            one = device.Viewport.Project(vertices[0].Position, project, view, world);            
-            for (int i = 0; i < vertNum - 1; i++)
+            DividingVert minVert=LineIntersectPoint(vertices[0].Position, vertices[1].Position, point);
+            minVert.small = 0;
+            minVert.big = 1;
+            for (int i = 1; i < vertNum; i++)
             {
-                two = device.Viewport.Project(vertices[i+1].Position, project, view, world);
-                if (LineIntersectPoint(one, two, point, 5))
+                DividingVert currentVert = LineIntersectPoint(vertices[i].Position, vertices[(i+1)%vertNum].Position, point);
+                if (currentVert.distance < minVert.distance)
                 {
-                    one = device.Viewport.Unproject(new Vector3(pointOnEdge,0f), project, view, world);   
-                    ver[0].Position = new Vector3(pointOnEdge.X - 0.5f, pointOnEdge.Y - 0.5f, 0f);
-                    ver[0].TextureCoordinate = Vector2.Zero;
-                    ver[1].Position = new Vector3(pointOnEdge.X, pointOnEdge.Y + 0.5f, 0f);
-                    ver[1].TextureCoordinate = Vector2.Zero;
-                    ver[2].Position = new Vector3(pointOnEdge.X + 0.5f, pointOnEdge.Y - 0.5f, 0f);
-                    ver[2].TextureCoordinate = Vector2.Zero;
-                    return true;
-                }
-                one = two;
+                    minVert = currentVert;
+                    minVert.small = i;
+                    minVert.big = (i + 1) % vertNum;
+                }                
+            }
+            if (minVert.distance < 1f)
+            {
+                pointOnEdge = minVert.position;
+                ver[0].Position = new Vector3(pointOnEdge.X - 0.5f, 0, pointOnEdge.Z - 0.5f);
+                ver[0].TextureCoordinate = Vector2.Zero;
+                ver[1].Position = new Vector3(pointOnEdge.X, 0f, pointOnEdge.Z + 0.5f);
+                ver[1].TextureCoordinate = Vector2.Zero;
+                ver[2].Position = new Vector3(pointOnEdge.X + 0.5f, 0f, pointOnEdge.Z - 0.5f);
+                ver[2].TextureCoordinate = Vector2.Zero;
+                p[temp] = minVert;
+                temp++;
+                return true;
             }
             return false;
         }
 
-
-        private Vector2 DistanceLineSegmentToPoint(Vector2 A, Vector2 B, Vector2 p, float dist)
+        private DividingVert LineIntersectPoint(Vector3 v1, Vector3 v2, Vector3 point)
         {
+            Vector2 A = new Vector2(v1.X, v1.Z);
+            Vector2 B = new Vector2(v2.X, v2.Z);
+            Vector2 p = new Vector2(point.X, point.Z);
+ 
+            DividingVert edgePoint = new DividingVert();
             //get the normalized line segment vector
             Vector2 v = B - A;
             v.Normalize();
@@ -120,25 +153,78 @@ namespace second3d
 
             //Calculate the distance between the two points
             float actualDistance = Vector2.Distance(nearestPoint, p);
-            if (actualDistance < dist)
-                return nearestPoint;
-            return Vector2.Zero;
-        }
-
-        private bool LineIntersectPoint(Vector3 v1, Vector3 v2, Vector2 p, float dist)
-        {
-            Vector2 A = new Vector2(v1.X, v1.Y);
-            Vector2 B = new Vector2(v2.X, v2.Y);
-            Vector2 nearestPoint = DistanceLineSegmentToPoint(A, B, p,dist);
-            if (nearestPoint != Vector2.Zero)
-            {
-                pointOnEdge = nearestPoint;
-                return true;
-            }
-            else
-                return false;
+            edgePoint.distance = actualDistance;
+            edgePoint.big = edgePoint.small = -1;
+            edgePoint.position = new Vector3(nearestPoint.X, 0, nearestPoint.Y);
+            return edgePoint;
         }
 #endregion
 
+#region Divide Shape
+        public void Divide(DividingVert first, DividingVert second, out PolyTexture partOne, out PolyTexture partTwo)
+        {       
+            //
+            /* ADD TEST TO FIND IF NOT ON THE SAME EDGE*/
+            //
+            PolyTexture part1 = new PolyTexture();
+            PolyTexture part2 = new PolyTexture();
+            int p1_pNum,p2_pNum;            
+            p1_pNum = Math.Abs(first.big - second.small) + 3;
+            if ((first.big == vertNum - 1) && (second.small == 0))
+                p1_pNum -=2;
+            p2_pNum = indices.Length - p1_pNum + 2;
+            Vector3[] p1_points = new Vector3[p1_pNum];
+            Vector2[] p1_texCords = new Vector2[p1_pNum];
+            p1_points[0] = first.position;
+            p1_texCords[0] = findTexCords(first);
+            p1_points[p1_pNum - 1] = second.position;
+            p1_texCords[p1_pNum - 1] = findTexCords(second);
+            for (int i = 0; i < p1_pNum - 2; i++)
+            {
+                p1_points[i + 1] = vertices[(first.big + i) % vertNum].Position;
+                p1_texCords[i + 1] = vertices[(first.big + i) % vertNum].TextureCoordinate;
+            }
+            Vector3[] p2_points = new Vector3[p2_pNum];
+            Vector2[] p2_texCords = new Vector2[p2_pNum];
+            p2_points[0] = second.position;
+            p2_texCords[0] = p1_texCords[p1_pNum - 1]; //alreadt calculated before a moment
+            p2_points[p2_pNum - 1] = first.position;
+            p2_texCords[p2_pNum - 1] = p1_texCords[0]; //alreadt calculated before a moment
+            for (int i = 0; i < p2_pNum - 2; i++)
+            {
+                p2_points[i + 1] = vertices[(second.big + i) % vertNum].Position;
+                p2_texCords[i + 1] = vertices[(first.big + i) % vertNum].TextureCoordinate;
+            }
+            part1.Initialize(texture, p1_pNum, p1_points, p1_texCords);
+            part2.Initialize(texture, p2_pNum, p2_points, p2_texCords);
+            partOne = part1;
+            partTwo = part2;
+        }
+
+        private Vector2 findTexCords(DividingVert divVert)
+        {
+            Vector2 distFromSmall = new Vector2(Math.Abs(divVert.position.X - vertices[divVert.small].Position.X),
+                                   Math.Abs(divVert.position.Z - vertices[divVert.small].Position.Z));
+            Vector2 sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].Position.X - vertices[divVert.big].Position.X),
+                            Math.Abs(vertices[divVert.small].Position.Z - vertices[divVert.big].Position.Z));
+            distFromSmall /= new Vector2((sizeOfLine.X != 0 ? sizeOfLine.X : 1), (sizeOfLine.Y != 0 ? sizeOfLine.Y : 1));
+            sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].TextureCoordinate.X - 
+                vertices[divVert.big].TextureCoordinate.X),
+                Math.Abs(vertices[divVert.small].TextureCoordinate.Y - vertices[divVert.big].TextureCoordinate.Y));
+            distFromSmall *= sizeOfLine;
+            if (vertices[divVert.small].TextureCoordinate.X == vertices[divVert.big].TextureCoordinate.X)
+                distFromSmall.X = vertices[divVert.small].TextureCoordinate.X;
+            if (vertices[divVert.small].TextureCoordinate.Y == vertices[divVert.big].TextureCoordinate.Y)
+                distFromSmall.Y = vertices[divVert.small].TextureCoordinate.Y;
+            return distFromSmall;
+        }
+
+#endregion
+
+
+        internal void update()
+        {            
+             Divide(p[0],p[1],out one,out two);
+        }
     }
 }
