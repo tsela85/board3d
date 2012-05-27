@@ -26,6 +26,11 @@ namespace second3d
         VertexPositionTexture[] ver;
         public PolyTexture one, two;
         public float angle = 0;
+        Effect effect;
+        Matrix viewMatrix;
+        Matrix projectionMatrix;
+        Matrix worldMatrix;
+
 #region properties
 
         public VertexPositionNormalTexture[] Vertices
@@ -42,13 +47,18 @@ namespace second3d
  
 #endregion
         
-        public void Initialize(Texture2D tex, int vNum, Vector3[] points,Vector2[] texCords)
+        public void Initialize(Texture2D tex, int vNum, Vector3[] points,Vector2[] texCords,Effect eff,
+            Matrix view,Matrix project)
         {
             pointOnEdge = Vector3.Zero;
             int iCount = (vNum - 3) * 3 + 3;
             vertNum = vNum;
             texture = tex;
             vertices = new VertexPositionNormalTexture[vNum];
+            effect = eff;
+            viewMatrix = view;
+            projectionMatrix = project;
+            worldMatrix = Matrix.Identity;            
 
             indices = new short[iCount];
             for (int i = 0; i < vNum; i++)
@@ -71,35 +81,33 @@ namespace second3d
 
         }
 
-        public void Draw(ref GraphicsDevice device,ref Effect effect)
+        public void Draw(ref GraphicsDevice device)
         {
+            if (temp >= 2)
+            {
+                one.DarwRotation(ref device, angle);
+                two.Draw(ref device);
+                angle += 0.01f;
+                temp = 3;
+            } else 
+            {
+           
+                effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
+                effect.Parameters["xWorld"].SetValue(worldMatrix);
+                effect.Parameters["xView"].SetValue(viewMatrix);
+                effect.Parameters["xProjection"].SetValue(projectionMatrix);
+                effect.Parameters["xTexture"].SetValue(texture);
 
-            
-             Matrix worldMatrix = Matrix.Identity;
-             
-             effect.Parameters["xWorld"].SetValue(worldMatrix);
-             effect.Parameters["xTexture"].SetValue(texture);
+                foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+                {
+                    pass.Apply();
 
-             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-             {
-                 pass.Apply();
+                    device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
+                        vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+                    device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
 
-
-                 if (temp >= 2)
-                 {
-                     one.DarwRotation(ref device, angle);
-                     two.Draw(ref device, ref effect);
-                     angle += 0.01f;
-                     temp = 3;
-                 }
-                 else
-                 {
-
-                     device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
-                         vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
-                     device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
-                 }
-             }
+                }
+            }
         }
 
 #region Collision
@@ -208,8 +216,8 @@ namespace second3d
                 p2_points[i + 1] = vertices[(second.big + i) % vertNum].Position;
                 p2_texCords[i + 1] = vertices[(first.big + i) % vertNum].TextureCoordinate;
             }
-            part1.Initialize(texture, p1_pNum, p1_points, p1_texCords);
-            part2.Initialize(texture, p2_pNum, p2_points, p2_texCords);
+            part1.Initialize(texture, p1_pNum, p1_points, p1_texCords,effect,viewMatrix,projectionMatrix);
+            part2.Initialize(texture, p2_pNum, p2_points, p2_texCords, effect,viewMatrix,projectionMatrix);
             partOne = part1;
             partTwo = part2;
         }
@@ -251,14 +259,14 @@ namespace second3d
 #region rotation
         public void DarwRotation(ref GraphicsDevice device,float angle)
         {
-            VertexPositionNormalTexture[] rotateVerts = new VertexPositionNormalTexture[vertNum];            
-            Vector3 axis = vertices[0].Position - vertices[vertNum-1].Position;            
-            axis.Normalize();
+          //  VertexPositionNormalTexture[] rotateVerts = new VertexPositionNormalTexture[vertNum];            
+          //  Vector3 axis = vertices[0].Position - vertices[vertNum-1].Position;            
+          //  axis.Normalize();
 
-          //  axis = Vector3.Reflect(axis, Vector3.Up);
-            float temp= MathHelper.ToDegrees(angle);
-            //Matrix rotateMatrix = Matrix.CreateFromAxisAngle(axis, angle);
-            Matrix rotateMatrix = Matrix.CreateTranslation(axis) * Matrix.CreateRotationX(angle) * Matrix.CreateRotationZ(angle);
+          ////  axis = Vector3.Reflect(axis, Vector3.Up);
+          //  float temp= MathHelper.ToDegrees(angle);
+          //  //Matrix rotateMatrix = Matrix.CreateFromAxisAngle(axis, angle);
+          //  Matrix rotateMatrix = Matrix.CreateTranslation(axis) * Matrix.CreateRotationX(angle) * Matrix.CreateRotationZ(angle);
             //Matrix rotateMatrix = Matrix.CreateRotationX(angle);
             //Quaternion rotation = Quaternion.CreateFromAxisAngle(axis, angle);
            // Quaternion rotation = Quaternion.CreateFromRotationMatrix(rotateMatrix);
@@ -269,20 +277,43 @@ namespace second3d
             //temp = Vector3.Transform(temp, Matrix.CreateRotationX(angle))
             //objectPosition = objectToRotateAboutPosition + temp;
 
-            
-            rotateVerts[0] = vertices[0];
-            rotateVerts[vertNum-1] = vertices[vertNum-1];
-            for (int i = 0; i < vertNum ; i++)
-            {
-                rotateMatrix = Matrix.CreateTranslation(vertices[i].Position) * Matrix.CreateFromAxisAngle(axis, angle);
-                rotateVerts[i] = vertices[i];
-                rotateVerts[i].Position = Vector3.Transform(vertices[i].Position, rotateMatrix) ;
-            }
 
-            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, rotateVerts, 0,
-              rotateVerts.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
-             //vertices = rotateVerts;
+
             
+            //rotateVerts[0] = vertices[0];
+            //rotateVerts[vertNum-1] = vertices[vertNum-1];
+            //for (int i = 0; i < vertNum ; i++)
+            //{
+            //    rotateMatrix = Matrix.CreateTranslation(vertices[i].Position) * Matrix.CreateFromAxisAngle(axis, angle);
+            //    rotateVerts[i] = vertices[i];
+            //    rotateVerts[i].Position = Vector3.Transform(vertices[i].Position, rotateMatrix) ;
+            //}
+
+            //device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, rotateVerts, 0,
+            //  rotateVerts.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+            // //vertices = rotateVerts;
+
+            //Matrix worldMatrix = Matrix.Identity;
+            //vertices.
+            Vector3 axis = vertices[0].Position - vertices[vertNum - 1].Position;
+            axis.Normalize();
+            Matrix worldMatrix =  Matrix.CreateTranslation(vertices[0].Position - vertices[vertNum - 1].Position) * Matrix.CreateFromAxisAngle(axis, angle);
+
+            effect.Parameters["xWorld"].SetValue(worldMatrix);
+            effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
+            effect.Parameters["xWorld"].SetValue(worldMatrix);
+            effect.Parameters["xView"].SetValue(viewMatrix);
+            effect.Parameters["xProjection"].SetValue(projectionMatrix);
+            effect.Parameters["xTexture"].SetValue(texture);
+
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+
+                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
+                    vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+                device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
+            }        
         }
         
 #endregion

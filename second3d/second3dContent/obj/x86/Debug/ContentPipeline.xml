@@ -34,10 +34,10 @@
       <TargetProfile>Reach</TargetProfile>
       <BuildConfiguration>Debug</BuildConfiguration>
       <CompressContent>false</CompressContent>
-      <RootDirectory>c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3dContent\</RootDirectory>
-      <LoggerRootDirectory>c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\</LoggerRootDirectory>
-      <IntermediateDirectory>c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3dContent\obj\x86\Debug\</IntermediateDirectory>
-      <OutputDirectory>c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\</OutputDirectory>
+      <RootDirectory>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3dContent\</RootDirectory>
+      <LoggerRootDirectory>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\</LoggerRootDirectory>
+      <IntermediateDirectory>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3dContent\obj\x86\Debug\</IntermediateDirectory>
+      <OutputDirectory>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\</OutputDirectory>
     </Settings>
     <Assemblies>
       <Assembly>

@@ -16,19 +16,23 @@
          GraphicsDeviceManager graphics;
          SpriteBatch spriteBatch;
          GraphicsDevice device;
-         Effect effect;
+        
          Texture2D texture;
          private float angle = 0f;
          PolyTexture board;
          KeyboardState lstk;
          MouseState last_ms;
-          
+         Effect effect;
+
+         private InputHandler input;
+
+         private Camera camera;
 
          VertexPositionTexture[] vertices;
 
-         Matrix viewMatrix;
-         Matrix projectionMatrix;
-         Matrix worldMatrix;
+       //  Matrix viewMatrix;
+      //   Matrix projectionMatrix;
+
 
          public Game1()
          {
@@ -46,6 +50,12 @@
              this.IsMouseVisible = true;
              Window.Title = "Lets Fold It!!";
 
+             input = new InputHandler(this);
+        //     Components.Add(input);
+
+             camera = new Camera(this);
+          //   Components.Add(camera);
+
 
              base.Initialize();
          }
@@ -56,8 +66,9 @@
 
              device = graphics.GraphicsDevice;
 
-             effect = Content.Load<Effect>("effects");
+
              texture = Content.Load<Texture2D>("images");
+             effect = Content.Load<Effect>("effects");
              Vector3[] points = new Vector3[4] {
                 new Vector3(-20f, 0f, 10f),
                 new Vector3(20f, 0f, 10f),
@@ -70,17 +81,20 @@
                 new Vector2(1,1),
                 new Vector2(0,1)  
              };
-             board.Initialize(texture, 4, points, texCords);
-             SetUpCamera();
+         //    SetUpCamera();
+             camera.Initialize();
+             board.Initialize(texture, 4, points, texCords, effect, camera.View, camera.Projection);
+            
 
              SetUpVertices();
          }
 
-         private void SetUpCamera()
-         {
-             viewMatrix = Matrix.CreateLookAt(new Vector3(-50, -30, 00), new Vector3(0, 0, 0), new Vector3(0, 0, 1));
-             projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, device.Viewport.AspectRatio, 0.2f, 500.0f);
-         }
+         //private void SetUpCamera()
+         //{
+         //    viewMatrix = Matrix.CreateLookAt(new Vector3(20, -50, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 1));
+         //    projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, device.Viewport.AspectRatio, 0.2f, 500.0f);
+         //}
+
 
          private void SetUpVertices()
          {
@@ -123,8 +137,10 @@
              KeyboardState keyState = Keyboard.GetState();
              MouseState ms = Mouse.GetState();
              Vector3 mouse = GetPickedPosition(new Vector2((float)ms.X, (float)ms.Y));
-
-             if ((last_ms.LeftButton == ButtonState.Pressed) && ((ms.LeftButton == ButtonState.Released)))
+             input.Update(gameTime);
+           //  camera.Update(gameTime);       
+             //if ((last_ms.LeftButton == ButtonState.Pressed) && ((ms.LeftButton == ButtonState.Released)))
+             if (input.MouseHandler.WasLeftButtonClicked())
              {
                  if (board.temp < 2)
                     board.collideWithEdge(mouse);
@@ -161,6 +177,7 @@
 
              lstk = keyState;
              last_ms = ms;
+          //   camera.Update(gameTime);
              base.Update(gameTime);
          }
 
@@ -172,26 +189,8 @@
              rs.FillMode = FillMode.WireFrame;
              device.RasterizerState = rs;
 
-
-         //    worldMatrix = Matrix.Identity;
-             effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
-           //  effect.Parameters["xWorld"].SetValue(worldMatrix);
-             effect.Parameters["xView"].SetValue(viewMatrix);
-             effect.Parameters["xProjection"].SetValue(projectionMatrix);
-             //effect.Parameters["xTexture"].SetValue(texture);
-
-             //foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-             //{
-               //  pass.Apply();
-
-                  //device.DrawUserPrimitives(PrimitiveType.TriangleList, vertices,0, 2, VertexPositionTexture.VertexDeclaration);
-                  //device.DrawUserPrimitives(PrimitiveType.TriangleList, board.Vertices, 0, 1, VertexPositionTexture.VertexDeclaration);
-
-
-                
-
-             //}
-             board.Draw(ref device, ref effect);
+             board.Draw(ref device);  
+             
              base.Draw(gameTime);
          }
 
@@ -208,10 +207,10 @@
              Vector3 farSource = new Vector3(mousePosition, 1f);
 
              // find the two screen space positions in world space
-             Vector3 nearPoint = GraphicsDevice.Viewport.Unproject(nearSource, projectionMatrix,viewMatrix,worldMatrix);
+             Vector3 nearPoint = GraphicsDevice.Viewport.Unproject(nearSource, camera.Projection, camera.View, Matrix.Identity);
 
              Vector3 farPoint = GraphicsDevice.Viewport.Unproject(farSource,
-                                 projectionMatrix, viewMatrix, worldMatrix);
+                                 camera.Projection, camera.View, Matrix.Identity);
 
              // compute normalized direction vector from nearPoint to farPoint
              Vector3 direction = farPoint - nearPoint;
