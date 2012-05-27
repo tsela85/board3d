@@ -22,6 +22,7 @@
          PolyTexture board;
          KeyboardState lstk;
          MouseState last_ms;
+          
 
          VertexPositionTexture[] vertices;
 
@@ -77,7 +78,7 @@
 
          private void SetUpCamera()
          {
-             viewMatrix = Matrix.CreateLookAt(new Vector3(0, -50, 0), new Vector3(0, 0, 0), new Vector3(0, 0, 1));
+             viewMatrix = Matrix.CreateLookAt(new Vector3(-50, -30, 00), new Vector3(0, 0, 0), new Vector3(0, 0, 1));
              projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, device.Viewport.AspectRatio, 0.2f, 500.0f);
          }
 
@@ -85,28 +86,28 @@
          {
              vertices = new VertexPositionTexture[6];
 
-             vertices[0].Position = new Vector3(-10f, 10f, 0f);
+             vertices[0].Position = new Vector3(-10f,0f, 10f);
              vertices[0].TextureCoordinate.X = 0;
              vertices[0].TextureCoordinate.Y = 0;
 
 
-             vertices[1].Position = new Vector3(10f, -10f, 0f);
+             vertices[1].Position = new Vector3(10f, 0f, -10f);
              vertices[1].TextureCoordinate.X = 1;
              vertices[1].TextureCoordinate.Y = 1;
 
-             vertices[2].Position = new Vector3(-10f, -10f, 0f);
+             vertices[2].Position = new Vector3(-10f,0f, -10f);
              vertices[2].TextureCoordinate.X = 0;
              vertices[2].TextureCoordinate.Y = 1;
 
-             vertices[3].Position = new Vector3(10f, -10f, 0f);
+             vertices[3].Position = new Vector3(10f, 0f, -10f);
              vertices[3].TextureCoordinate.X = 1;
              vertices[3].TextureCoordinate.Y = 1;
 
-             vertices[4].Position = new Vector3(-10f, 10f, 0f);
+             vertices[4].Position = new Vector3(-10f, 0f, 10f);
              vertices[4].TextureCoordinate.X = 0;
              vertices[4].TextureCoordinate.Y = 0;
 
-             vertices[5].Position = new Vector3(10f, 10f, 0f);
+             vertices[5].Position = new Vector3(-10f, 0f, -10f);
              vertices[5].TextureCoordinate.X = 1;
              vertices[5].TextureCoordinate.Y = 0;
          }
@@ -134,15 +135,17 @@
              {
                  if (board.temp == 3)
                      board.temp = 0;
+                 board.angle = 0;
              }
-             if (lstk.IsKeyDown(Keys.Left) && (keyState.IsKeyUp(Keys.Left)))
+             if (lstk.IsKeyDown(Keys.Left)) //&& (keyState.IsKeyUp(Keys.Left)))
              {
                  //angle = MathHelper.Pi;
                  //direction = 1;
                  //angle += 0.001f;
-                 angle = 0.1f;
-                 Matrix rotateMatrix = Matrix.CreateFromAxisAngle(vertices[1].Position - vertices[0].Position, angle);
-                 vertices[2].Position = Vector3.Transform(vertices[2].Position, rotateMatrix);                 
+                 angle += 0.01f;
+                 //Matrix rotateMatrix = Matrix.CreateFromAxisAngle(vertices[1].Position - vertices[0].Position, angle);
+                 Matrix rotateMatrix = Matrix.CreateRotationY(angle);
+                 vertices[2].Position = Vector3.Transform(vertices[5].Position, rotateMatrix);                 
 
 
              }
@@ -166,28 +169,29 @@
              device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
              RasterizerState rs = new RasterizerState();
              rs.CullMode = CullMode.None;
-            // rs.FillMode = FillMode.WireFrame;
+             rs.FillMode = FillMode.WireFrame;
              device.RasterizerState = rs;
 
 
-             worldMatrix = Matrix.Identity;
+         //    worldMatrix = Matrix.Identity;
              effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
-             effect.Parameters["xWorld"].SetValue(worldMatrix);
+           //  effect.Parameters["xWorld"].SetValue(worldMatrix);
              effect.Parameters["xView"].SetValue(viewMatrix);
              effect.Parameters["xProjection"].SetValue(projectionMatrix);
-             effect.Parameters["xTexture"].SetValue(texture);
+             //effect.Parameters["xTexture"].SetValue(texture);
 
-             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-             {
-                 pass.Apply();
+             //foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+             //{
+               //  pass.Apply();
 
-                 // device.DrawUserPrimitives(PrimitiveType.TriangleList, vertices,0, 2, VertexPositionTexture.VertexDeclaration);
-                 // device.DrawUserPrimitives(PrimitiveType.TriangleList, board.Vertices, 0, 1, VertexPositionTexture.VertexDeclaration);
+                  //device.DrawUserPrimitives(PrimitiveType.TriangleList, vertices,0, 2, VertexPositionTexture.VertexDeclaration);
+                  //device.DrawUserPrimitives(PrimitiveType.TriangleList, board.Vertices, 0, 1, VertexPositionTexture.VertexDeclaration);
 
 
-                 board.Draw(ref device);
-             }
+                
 
+             //}
+             board.Draw(ref device, ref effect);
              base.Draw(gameTime);
          }
 

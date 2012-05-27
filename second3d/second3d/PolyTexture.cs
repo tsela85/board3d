@@ -25,7 +25,7 @@ namespace second3d
         public int temp = 0;
         VertexPositionTexture[] ver;
         public PolyTexture one, two;
-
+        public float angle = 0;
 #region properties
 
         public VertexPositionNormalTexture[] Vertices
@@ -71,25 +71,38 @@ namespace second3d
 
         }
 
-        public void Draw(ref GraphicsDevice device)
+        public void Draw(ref GraphicsDevice device,ref Effect effect)
         {
 
-            if (temp >= 2)
-            {
-                one.Draw(ref device);
-                two.Draw(ref device);
-                temp = 3;
-            }
-            else
-            {
+            
+             Matrix worldMatrix = Matrix.Identity;
+             
+             effect.Parameters["xWorld"].SetValue(worldMatrix);
+             effect.Parameters["xTexture"].SetValue(texture);
 
-                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
-                    vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
-                device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
-            }
+             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+             {
+                 pass.Apply();
+
+
+                 if (temp >= 2)
+                 {
+                     one.DarwRotation(ref device, angle);
+                     two.Draw(ref device, ref effect);
+                     angle += 0.01f;
+                     temp = 3;
+                 }
+                 else
+                 {
+
+                     device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
+                         vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+                     device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
+                 }
+             }
         }
 
- #region Collision
+#region Collision
         public bool collideWithEdge(Vector3 point)
         {
             DividingVert minVert=LineIntersectPoint(vertices[0].Position, vertices[1].Position, point);
@@ -203,6 +216,20 @@ namespace second3d
 
         private Vector2 findTexCords(DividingVert divVert)
         {
+            float smallX = vertices[divVert.small].Position.X;
+            float smallCordX = vertices[divVert.small].TextureCoordinate.X;
+            float bigX = vertices[divVert.big].Position.X;
+            float bigCordX = vertices[divVert.big].TextureCoordinate.X;
+            float vertX = divVert.position.X;
+
+            float smallZ = vertices[divVert.small].Position.Z;
+            float smallCordZ = vertices[divVert.small].TextureCoordinate.Y;
+            float bigZ = vertices[divVert.big].Position.Z;
+            float bigCordZ = vertices[divVert.big].TextureCoordinate.Y;
+            float vertZ = divVert.position.Z; 
+
+           
+
             Vector2 distFromSmall = new Vector2(Math.Abs(divVert.position.X - vertices[divVert.small].Position.X),
                                    Math.Abs(divVert.position.Z - vertices[divVert.small].Position.Z));
             Vector2 sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].Position.X - vertices[divVert.big].Position.X),
@@ -212,7 +239,7 @@ namespace second3d
                 vertices[divVert.big].TextureCoordinate.X),
                 Math.Abs(vertices[divVert.small].TextureCoordinate.Y - vertices[divVert.big].TextureCoordinate.Y));
             distFromSmall *= sizeOfLine;
-            if (vertices[divVert.small].TextureCoordinate.X == vertices[divVert.big].TextureCoordinate.X)
+            if (divVert.position.X == vertices[divVert.small].TextureCoordinate.X)
                 distFromSmall.X = vertices[divVert.small].TextureCoordinate.X;
             if (vertices[divVert.small].TextureCoordinate.Y == vertices[divVert.big].TextureCoordinate.Y)
                 distFromSmall.Y = vertices[divVert.small].TextureCoordinate.Y;
@@ -221,7 +248,44 @@ namespace second3d
 
 #endregion
 
+#region rotation
+        public void DarwRotation(ref GraphicsDevice device,float angle)
+        {
+            VertexPositionNormalTexture[] rotateVerts = new VertexPositionNormalTexture[vertNum];            
+            Vector3 axis = vertices[0].Position - vertices[vertNum-1].Position;            
+            axis.Normalize();
 
+          //  axis = Vector3.Reflect(axis, Vector3.Up);
+            float temp= MathHelper.ToDegrees(angle);
+            //Matrix rotateMatrix = Matrix.CreateFromAxisAngle(axis, angle);
+            Matrix rotateMatrix = Matrix.CreateTranslation(axis) * Matrix.CreateRotationX(angle) * Matrix.CreateRotationZ(angle);
+            //Matrix rotateMatrix = Matrix.CreateRotationX(angle);
+            //Quaternion rotation = Quaternion.CreateFromAxisAngle(axis, angle);
+           // Quaternion rotation = Quaternion.CreateFromRotationMatrix(rotateMatrix);
+           // rotation.Normalize;
+           // Matrix.CreateFromQuaternion(ref rotation,out rotateMatrix);
+
+            //Vector3 temp = objectPosition - objectToRotateAboutPosition;
+            //temp = Vector3.Transform(temp, Matrix.CreateRotationX(angle))
+            //objectPosition = objectToRotateAboutPosition + temp;
+
+            
+            rotateVerts[0] = vertices[0];
+            rotateVerts[vertNum-1] = vertices[vertNum-1];
+            for (int i = 0; i < vertNum ; i++)
+            {
+                rotateMatrix = Matrix.CreateTranslation(vertices[i].Position) * Matrix.CreateFromAxisAngle(axis, angle);
+                rotateVerts[i] = vertices[i];
+                rotateVerts[i].Position = Vector3.Transform(vertices[i].Position, rotateMatrix) ;
+            }
+
+            device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, rotateVerts, 0,
+              rotateVerts.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+             //vertices = rotateVerts;
+            
+        }
+        
+#endregion
         internal void update()
         {            
              Divide(p[0],p[1],out one,out two);
