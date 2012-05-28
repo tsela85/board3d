@@ -186,7 +186,7 @@
              device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.DarkSlateBlue, 1.0f, 0);
              RasterizerState rs = new RasterizerState();
              rs.CullMode = CullMode.None;
-             rs.FillMode = FillMode.WireFrame;
+           //  rs.FillMode = FillMode.WireFrame;
              device.RasterizerState = rs;
 
              board.Draw(ref device);  

@@ -25,7 +25,7 @@ namespace second3d
             get { return view; }
         }
 
-        private Vector3 cameraPosition = new Vector3(20, -50, 0);
+        private Vector3 cameraPosition = new Vector3(0, -50, 0);
         private Vector3 cameraTarget = Vector3.Zero;
         private Vector3 cameraUpVector = new Vector3(0, 0, 1);
 

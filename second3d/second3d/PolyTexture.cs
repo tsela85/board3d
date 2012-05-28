@@ -87,8 +87,14 @@ namespace second3d
             {
                 one.DarwRotation(ref device, angle);
                 two.Draw(ref device);
-                angle += 0.01f;
-                temp = 3;
+                if (temp == 2)
+                    angle -= 0.02f;
+                if (temp == 3)
+                    angle += 0.02f;
+                if (angle < -MathHelper.Pi)
+                    temp = 3;                
+                if (angle > 0)
+                    temp = 2;                  
             } else 
             {
            
@@ -208,13 +214,13 @@ namespace second3d
             Vector3[] p2_points = new Vector3[p2_pNum];
             Vector2[] p2_texCords = new Vector2[p2_pNum];
             p2_points[0] = second.position;
-            p2_texCords[0] = p1_texCords[p1_pNum - 1]; //alreadt calculated before a moment
+            p2_texCords[0] = findTexCords(second); //alreadt calculated before a moment
             p2_points[p2_pNum - 1] = first.position;
-            p2_texCords[p2_pNum - 1] = p1_texCords[0]; //alreadt calculated before a moment
+            p2_texCords[p2_pNum - 1] = findTexCords(first); //alreadt calculated before a moment
             for (int i = 0; i < p2_pNum - 2; i++)
             {
                 p2_points[i + 1] = vertices[(second.big + i) % vertNum].Position;
-                p2_texCords[i + 1] = vertices[(first.big + i) % vertNum].TextureCoordinate;
+                p2_texCords[i + 1] = vertices[(second.big + i) % vertNum].TextureCoordinate;
             }
             part1.Initialize(texture, p1_pNum, p1_points, p1_texCords,effect,viewMatrix,projectionMatrix);
             part2.Initialize(texture, p2_pNum, p2_points, p2_texCords, effect,viewMatrix,projectionMatrix);
@@ -234,24 +240,32 @@ namespace second3d
             float smallCordZ = vertices[divVert.small].TextureCoordinate.Y;
             float bigZ = vertices[divVert.big].Position.Z;
             float bigCordZ = vertices[divVert.big].TextureCoordinate.Y;
-            float vertZ = divVert.position.Z; 
+            float vertZ = divVert.position.Z;
 
-           
+            float xSize = Math.Abs(bigX - smallX);
+            float zSize = Math.Abs(bigZ - smallZ);
+            float xRel = (xSize != 0 ? Math.Abs(Math.Min(smallX,bigX) - vertX) / xSize : smallX);
+            float zRel = (zSize != 0 ? Math.Abs(Math.Min(smallZ, bigZ) - vertZ) / zSize : smallZ);
+            float xCsize = Math.Abs(bigCordX - smallCordX);
+            float zCsize = Math.Abs(bigCordZ - smallCordZ);
+            float xCrel = (xCsize != 0 ? xRel * xCsize : smallCordX);
+            float zCrel = (zCsize != 0 ? zRel * zCsize : smallCordZ);
+            return new Vector2(xCrel, zCrel);
 
-            Vector2 distFromSmall = new Vector2(Math.Abs(divVert.position.X - vertices[divVert.small].Position.X),
-                                   Math.Abs(divVert.position.Z - vertices[divVert.small].Position.Z));
-            Vector2 sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].Position.X - vertices[divVert.big].Position.X),
-                            Math.Abs(vertices[divVert.small].Position.Z - vertices[divVert.big].Position.Z));
-            distFromSmall /= new Vector2((sizeOfLine.X != 0 ? sizeOfLine.X : 1), (sizeOfLine.Y != 0 ? sizeOfLine.Y : 1));
-            sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].TextureCoordinate.X - 
-                vertices[divVert.big].TextureCoordinate.X),
-                Math.Abs(vertices[divVert.small].TextureCoordinate.Y - vertices[divVert.big].TextureCoordinate.Y));
-            distFromSmall *= sizeOfLine;
-            if (divVert.position.X == vertices[divVert.small].TextureCoordinate.X)
-                distFromSmall.X = vertices[divVert.small].TextureCoordinate.X;
-            if (vertices[divVert.small].TextureCoordinate.Y == vertices[divVert.big].TextureCoordinate.Y)
-                distFromSmall.Y = vertices[divVert.small].TextureCoordinate.Y;
-            return distFromSmall;
+            //Vector2 distFromSmall = new Vector2(Math.Abs(divVert.position.X - vertices[divVert.small].Position.X),
+            //                       Math.Abs(divVert.position.Z - vertices[divVert.small].Position.Z));
+            //Vector2 sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].Position.X - vertices[divVert.big].Position.X),
+            //                Math.Abs(vertices[divVert.small].Position.Z - vertices[divVert.big].Position.Z));
+            //distFromSmall /= new Vector2((sizeOfLine.X != 0 ? sizeOfLine.X : 1), (sizeOfLine.Y != 0 ? sizeOfLine.Y : 1));
+            //sizeOfLine = new Vector2(Math.Abs(vertices[divVert.small].TextureCoordinate.X - 
+            //    vertices[divVert.big].TextureCoordinate.X),
+            //    Math.Abs(vertices[divVert.small].TextureCoordinate.Y - vertices[divVert.big].TextureCoordinate.Y));
+            //distFromSmall *= sizeOfLine;
+            //if (divVert.position.X == vertices[divVert.small].TextureCoordinate.X)
+            //    distFromSmall.X = vertices[divVert.small].TextureCoordinate.X;
+            //if (vertices[divVert.small].TextureCoordinate.Y == vertices[divVert.big].TextureCoordinate.Y)
+            //    distFromSmall.Y = vertices[divVert.small].TextureCoordinate.Y;
+            //return distFromSmall;
         }
 
 #endregion
@@ -296,9 +310,19 @@ namespace second3d
             //Matrix worldMatrix = Matrix.Identity;
             //vertices.
             Vector3 axis = vertices[0].Position - vertices[vertNum - 1].Position;
+           // Vector3 a = vertices[0].Position;
+           // Vector3 b = vertices[vertNum - 1].Position;
             axis.Normalize();
-            Matrix worldMatrix =  Matrix.CreateTranslation(vertices[0].Position - vertices[vertNum - 1].Position) * Matrix.CreateFromAxisAngle(axis, angle);
-
+           // Quaternion q = Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(a, b)),
+           //             (float)Math.Acos(Vector3.Dot(Vector3.Normalize(a), Vector3.Normalize(b))));
+            Matrix worldMatrix = Matrix.Identity;
+            worldMatrix *= Matrix.CreateTranslation(-vertices[0].Position);            
+            worldMatrix *=  Matrix.CreateFromAxisAngle(axis, angle);
+            worldMatrix *= Matrix.CreateTranslation(vertices[0].Position);            
+            //worldMatrix *= Matrix.CreateTranslation(axis);            
+            //worldMatrix *= Matrix.CreateFromQuaternion(q);
+            //worldMatrix = Matrix.CreateRotationZ(angle);
+            // Matrix.CreateTranslation((vertices[0].Position + vertices[vertNum - 1].Position)/2) *
             effect.Parameters["xWorld"].SetValue(worldMatrix);
             effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
             effect.Parameters["xWorld"].SetValue(worldMatrix);
