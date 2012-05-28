@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 namespace second3d
 {
@@ -20,16 +21,16 @@ namespace second3d
         int vertNum;      
         private Texture2D texture;
         private Vector3 pointOnEdge;
-        private Vector3 center;
         private DividingVert[] p;
         public int temp = 0;
         VertexPositionTexture[] ver;
         public PolyTexture one, two;
         public float angle = 0;
         Effect effect;
-        Matrix viewMatrix;
-        Matrix projectionMatrix;
+        Camera camera;
         Matrix worldMatrix;
+        GraphicsDevice device;
+        InputHandler input;
 
 #region properties
 
@@ -48,7 +49,7 @@ namespace second3d
 #endregion
         
         public void Initialize(Texture2D tex, int vNum, Vector3[] points,Vector2[] texCords,Effect eff,
-            Matrix view,Matrix project)
+            ref Camera cam, ref GraphicsDevice dev,ref InputHandler inp)
         {
             pointOnEdge = Vector3.Zero;
             int iCount = (vNum - 3) * 3 + 3;
@@ -56,8 +57,9 @@ namespace second3d
             texture = tex;
             vertices = new VertexPositionNormalTexture[vNum];
             effect = eff;
-            viewMatrix = view;
-            projectionMatrix = project;
+            camera = cam;
+            device = dev;
+            input = inp;
             worldMatrix = Matrix.Identity;            
 
             indices = new short[iCount];
@@ -81,17 +83,18 @@ namespace second3d
 
         }
 
-        public void Draw(ref GraphicsDevice device)
+        public void Draw()
         {
             if (temp >= 2)
             {
-                one.DarwRotation(ref device, angle);
-                two.Draw(ref device);
+                one.foldShape(angle);
+                one.Draw();
+                two.Draw();
                 if (temp == 2)
-                    angle -= 0.02f;
+                    angle -= 0.05f;
                 if (temp == 3)
                     angle += 0.02f;
-                if (angle < -MathHelper.Pi)
+                if (angle < -MathHelper.Pi + 0.05f)
                     temp = 3;                
                 if (angle > 0)
                     temp = 2;                  
@@ -100,8 +103,8 @@ namespace second3d
            
                 effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
                 effect.Parameters["xWorld"].SetValue(worldMatrix);
-                effect.Parameters["xView"].SetValue(viewMatrix);
-                effect.Parameters["xProjection"].SetValue(projectionMatrix);
+                effect.Parameters["xView"].SetValue(camera.View);
+                effect.Parameters["xProjection"].SetValue(camera.Projection);
                 effect.Parameters["xTexture"].SetValue(texture);
 
                 foreach (EffectPass pass in effect.CurrentTechnique.Passes)
@@ -185,6 +188,48 @@ namespace second3d
             edgePoint.position = new Vector3(nearestPoint.X, 0, nearestPoint.Y);
             return edgePoint;
         }
+
+        //----------------------------------------------------------------
+        // GetPickedPosition() - gets 3D position of mouse pointer
+        //                     - always on the the Y = 0 plane     
+        //----------------------------------------------------------------
+
+        public Vector3 GetPickedPosition(Vector2 mousePosition)
+        {
+
+            // create 2 positions in screenspace using the cursor position. 0 is as
+            // close as possible to the camera, 10 is as far away as possible
+            Vector3 nearSource = new Vector3(mousePosition, 0f);
+            Vector3 farSource = new Vector3(mousePosition, 1f);
+
+            // find the two screen space positions in world space
+            Vector3 nearPoint = device.Viewport.Unproject(nearSource, camera.Projection, camera.View, Matrix.Identity);
+
+            Vector3 farPoint = device.Viewport.Unproject(farSource,
+                                camera.Projection, camera.View, Matrix.Identity);
+
+            // compute normalized direction vector from nearPoint to farPoint
+            Vector3 direction = farPoint - nearPoint;
+            direction.Normalize();
+
+            // create a ray using nearPoint as the source
+            Ray r = new Ray(nearPoint, direction);
+
+            // calculate the ray-plane intersection point
+            Vector3 n = new Vector3(0f, 1f, 0f);
+            Plane p = new Plane(n, 0f);
+
+            // calculate distance of intersection point from r.origin
+            float denominator = Vector3.Dot(p.Normal, r.Direction);
+            float numerator = Vector3.Dot(p.Normal, r.Position) + p.D;
+            float t = -(numerator / denominator);
+
+            // calculate the picked position on the y = 0 plane
+            Vector3 pickedPosition = nearPoint + direction * t;
+
+
+            return pickedPosition;
+        }
 #endregion
 
 #region Divide Shape
@@ -222,8 +267,8 @@ namespace second3d
                 p2_points[i + 1] = vertices[(second.big + i) % vertNum].Position;
                 p2_texCords[i + 1] = vertices[(second.big + i) % vertNum].TextureCoordinate;
             }
-            part1.Initialize(texture, p1_pNum, p1_points, p1_texCords,effect,viewMatrix,projectionMatrix);
-            part2.Initialize(texture, p2_pNum, p2_points, p2_texCords, effect,viewMatrix,projectionMatrix);
+            part1.Initialize(texture, p1_pNum, p1_points, p1_texCords,effect,ref camera,ref device,ref input);
+            part2.Initialize(texture, p2_pNum, p2_points, p2_texCords, effect, ref camera, ref device,ref input);
             partOne = part1;
             partTwo = part2;
         }
@@ -270,80 +315,51 @@ namespace second3d
 
 #endregion
 
-#region rotation
-        public void DarwRotation(ref GraphicsDevice device,float angle)
-        {
-          //  VertexPositionNormalTexture[] rotateVerts = new VertexPositionNormalTexture[vertNum];            
-          //  Vector3 axis = vertices[0].Position - vertices[vertNum-1].Position;            
-          //  axis.Normalize();
-
-          ////  axis = Vector3.Reflect(axis, Vector3.Up);
-          //  float temp= MathHelper.ToDegrees(angle);
-          //  //Matrix rotateMatrix = Matrix.CreateFromAxisAngle(axis, angle);
-          //  Matrix rotateMatrix = Matrix.CreateTranslation(axis) * Matrix.CreateRotationX(angle) * Matrix.CreateRotationZ(angle);
-            //Matrix rotateMatrix = Matrix.CreateRotationX(angle);
-            //Quaternion rotation = Quaternion.CreateFromAxisAngle(axis, angle);
-           // Quaternion rotation = Quaternion.CreateFromRotationMatrix(rotateMatrix);
-           // rotation.Normalize;
-           // Matrix.CreateFromQuaternion(ref rotation,out rotateMatrix);
-
-            //Vector3 temp = objectPosition - objectToRotateAboutPosition;
-            //temp = Vector3.Transform(temp, Matrix.CreateRotationX(angle))
-            //objectPosition = objectToRotateAboutPosition + temp;
-
-
-
-            
-            //rotateVerts[0] = vertices[0];
-            //rotateVerts[vertNum-1] = vertices[vertNum-1];
-            //for (int i = 0; i < vertNum ; i++)
-            //{
-            //    rotateMatrix = Matrix.CreateTranslation(vertices[i].Position) * Matrix.CreateFromAxisAngle(axis, angle);
-            //    rotateVerts[i] = vertices[i];
-            //    rotateVerts[i].Position = Vector3.Transform(vertices[i].Position, rotateMatrix) ;
-            //}
-
-            //device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, rotateVerts, 0,
-            //  rotateVerts.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
-            // //vertices = rotateVerts;
-
-            //Matrix worldMatrix = Matrix.Identity;
-            //vertices.
-            Vector3 axis = vertices[0].Position - vertices[vertNum - 1].Position;
-           // Vector3 a = vertices[0].Position;
-           // Vector3 b = vertices[vertNum - 1].Position;
+#region Folding
+        public void foldShape(float angle)
+        {     
+           Vector3 axis = vertices[0].Position - vertices[vertNum - 1].Position;
             axis.Normalize();
-           // Quaternion q = Quaternion.CreateFromAxisAngle(Vector3.Normalize(Vector3.Cross(a, b)),
-           //             (float)Math.Acos(Vector3.Dot(Vector3.Normalize(a), Vector3.Normalize(b))));
-            Matrix worldMatrix = Matrix.Identity;
+           
+            worldMatrix = Matrix.Identity;
             worldMatrix *= Matrix.CreateTranslation(-vertices[0].Position);            
             worldMatrix *=  Matrix.CreateFromAxisAngle(axis, angle);
             worldMatrix *= Matrix.CreateTranslation(vertices[0].Position);            
-            //worldMatrix *= Matrix.CreateTranslation(axis);            
-            //worldMatrix *= Matrix.CreateFromQuaternion(q);
-            //worldMatrix = Matrix.CreateRotationZ(angle);
-            // Matrix.CreateTranslation((vertices[0].Position + vertices[vertNum - 1].Position)/2) *
-            effect.Parameters["xWorld"].SetValue(worldMatrix);
-            effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
-            effect.Parameters["xWorld"].SetValue(worldMatrix);
-            effect.Parameters["xView"].SetValue(viewMatrix);
-            effect.Parameters["xProjection"].SetValue(projectionMatrix);
-            effect.Parameters["xTexture"].SetValue(texture);
+           
+            //effect.Parameters["xWorld"].SetValue(worldMatrix);
+            //effect.CurrentTechnique = effect.Techniques["TexturedNoShading"];
+            //effect.Parameters["xWorld"].SetValue(worldMatrix);
+            //effect.Parameters["xView"].SetValue(camera.View);
+            //effect.Parameters["xProjection"].SetValue(camera.Projection);
+            //effect.Parameters["xTexture"].SetValue(texture);
 
-            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
-            {
-                pass.Apply();
+            //foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            //{
+            //    pass.Apply();
 
-                device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
-                    vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
-                device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
-            }        
+            //    device.DrawUserIndexedPrimitives(PrimitiveType.TriangleList, vertices, 0,
+            //        vertices.Length, indices, 0, indices.Length / 3, VertexPositionNormalTexture.VertexDeclaration);
+            //    device.DrawUserPrimitives(PrimitiveType.TriangleList, ver, 0, 1, VertexPositionNormalTexture.VertexDeclaration);
+            //}        
         }
         
 #endregion
         internal void update()
-        {            
-             Divide(p[0],p[1],out one,out two);
+        {
+            Vector3 mouse = GetPickedPosition(new Vector2((float)input.MouseHandler.MouseState.X, (float)input.MouseHandler.MouseState.Y));
+            if (input.MouseHandler.WasLeftButtonClicked())
+            {
+                if (temp < 2)
+                    collideWithEdge(mouse);
+                if (temp == 2)
+                    Divide(p[0], p[1], out one, out two);
+            }
+            if ((input.MouseHandler.WasRightButtonClicked()))
+            {                
+                temp = 0;
+                angle = 0;
+            }
+            
         }
     }
 }
