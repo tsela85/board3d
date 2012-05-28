@@ -19,7 +19,7 @@
         
          Texture2D texture;
       
-         PolyTexture board;
+         Board board;
          Effect effect;
 
          private InputHandler input;
@@ -38,15 +38,12 @@
              graphics.PreferredBackBufferHeight = 600;
              graphics.IsFullScreen = false;
              graphics.ApplyChanges();
-             board = new PolyTexture();
+             board = new Board();
              this.IsMouseVisible = true;
              Window.Title = "Lets Fold It!!";
 
-             input = new InputHandler(this);
-        //     Components.Add(input);
-
-             camera = new Camera(this);
-          //   Components.Add(camera);
+             input = new InputHandler(this);        
+             camera = new Camera(this);          
 
 
              base.Initialize();
@@ -59,7 +56,7 @@
              device = graphics.GraphicsDevice;
 
 
-             texture = Content.Load<Texture2D>("images");
+             texture = Content.Load<Texture2D>("paper3");
              effect = Content.Load<Effect>("effects");
              Vector3[] points = new Vector3[4] {
                 new Vector3(-25f, 0f, 20f),
@@ -73,7 +70,7 @@
                 new Vector2(1,1),
                 new Vector2(0,1)  
              };
-             camera.Initialize();
+             camera.Initialize(ref input);
              board.Initialize(texture, 4, points, texCords, effect,ref camera,ref device,ref input);
             
          }
@@ -94,7 +91,7 @@
 
              board.update();
 
-          //   camera.Update(gameTime);
+             camera.UpdateCamera(gameTime);
              base.Update(gameTime);
          }
 

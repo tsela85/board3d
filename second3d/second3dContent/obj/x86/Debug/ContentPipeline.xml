@@ -28,6 +28,42 @@
       <Output>c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\images.xnb</Output>
       <Time>2012-05-21T00:35:06.7533625+03:00</Time>
     </Item>
+    <Item>
+      <Source>paper.png</Source>
+      <Name>paper</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper.xnb</Output>
+      <Time>2012-05-28T12:55:29.4744405+03:00</Time>
+    </Item>
+    <Item>
+      <Source>paper3.jpg</Source>
+      <Name>paper3</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper3.xnb</Output>
+      <Time>2012-05-28T13:06:17.1938382+03:00</Time>
+    </Item>
+    <Item>
+      <Source>paper5.jpg</Source>
+      <Name>paper5</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper5.xnb</Output>
+      <Time>2012-05-28T13:08:44.6437923+03:00</Time>
+    </Item>
+    <Item>
+      <Source>paper4.jpg</Source>
+      <Name>paper4</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+      <Options>None</Options>
+      <Output>C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper4.xnb</Output>
+      <Time>2012-05-28T13:07:59.9463602+03:00</Time>
+    </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>

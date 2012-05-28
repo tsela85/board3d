@@ -7,3 +7,7 @@ c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\ob
 c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\effects.xnb
 c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\riemerstexture.xnb
 c:\users\tom\documents\visual studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\images.xnb
+C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper.xnb
+C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper3.xnb
+C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper5.xnb
+C:\Users\Tom\Documents\Visual Studio 2010\Projects\second3d\second3d\second3d\bin\x86\Debug\Content\paper4.xnb

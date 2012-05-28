@@ -1,3 +1,7 @@
 Content\effects.xnb
 Content\riemerstexture.xnb
 Content\images.xnb
+Content\paper.xnb
+Content\paper3.xnb
+Content\paper5.xnb
+Content\paper4.xnb

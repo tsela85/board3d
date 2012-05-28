@@ -13,6 +13,22 @@ namespace second3d
 {
     public class Camera : Microsoft.Xna.Framework.GameComponent
     {
+        // the following constants control the speed at which the camera moves
+        // how fast does the camera move up, down, left, and right?
+        const float CameraRotateSpeed = .1f;
+        // how fast does the camera zoom in and out?
+        const float CameraZoomSpeed = .01f;
+        // the camera can't be further away than this distance
+        const float CameraMaxDistance = 100.0f;
+        // and it can't be closer than this
+        const float CameraMinDistance = 15f;
+
+        // the following constants control how the camera's default position
+        const float CameraDefaultArc = -30.0f;
+        const float CameraDefaultRotation = 225;
+        const float CameraDefaultDistance = 50f;
+
+
         private Matrix projection;
         public Matrix Projection
         {
@@ -35,21 +51,29 @@ namespace second3d
 
         private float spinRate = 120.00f;
 
-        private IInputHandler input;
+        // The next set of variables are used to control the camera used in the sample. 
+        // It is an arc ball camera, so it can rotate in a sphere around the target, and
+        // zoom in and out.
+        float cameraArc = CameraDefaultArc;
+        float cameraRotation = CameraDefaultRotation;
+        float cameraDistance = CameraDefaultDistance;
+
+        private InputHandler input;
 
         public Camera(Game game)
             : base(game)
         {
-            input = (IInputHandler)game.Services.GetService(typeof(IInputHandler));
+           // input = (IInputHandler)game.Services.GetService(typeof(IInputHandler));
         }
 
         /// <summary>
         /// Allows the game component to perform any initialization it needs to before starting
         /// to run.  This is where it can query for any required services and load content.
         /// </summary>
-        public override void Initialize()
+        public void Initialize(ref InputHandler inp)
         {
             base.Initialize();
+            input = inp;
             InitializeCamera();
         }
 
@@ -64,6 +88,8 @@ namespace second3d
             //View
             Matrix.CreateLookAt(ref cameraPosition, ref cameraTarget,
                 ref cameraUpVector, out view);
+
+          
         }
 
         /// <summary>
@@ -82,21 +108,21 @@ namespace second3d
                 cameraPitch += (spinRate * timeDelta);
             if (input.KeyboardHandler.IsKeyDown(Keys.Down))
                 cameraPitch -= (spinRate * timeDelta);
-            
-#if !XBOX360
-            if ((input.MouseHandler.PrevMouseState.X > input.MouseHandler.MouseState.X) &&
-                (input.MouseHandler.IsHoldingLeftButton()))
-                cameraYaw += (spinRate * timeDelta);
-            else if ((input.MouseHandler.PrevMouseState.X < input.MouseHandler.MouseState.X) &&
-                (input.MouseHandler.IsHoldingLeftButton()))
-                cameraYaw -= (spinRate * timeDelta);
-            if ((input.MouseHandler.PrevMouseState.Y > input.MouseHandler.MouseState.Y) &&
-                (input.MouseHandler.IsHoldingLeftButton()))
-                cameraPitch += (spinRate * timeDelta);
-            else if ((input.MouseHandler.PrevMouseState.Y < input.MouseHandler.MouseState.Y) &&
-                (input.MouseHandler.IsHoldingLeftButton()))
-                cameraPitch -= (spinRate * timeDelta);
-#endif
+
+//#if !XBOX360
+//            if ((input.MouseHandler.PrevMouseState.X > input.MouseHandler.MouseState.X) &&
+//                (input.MouseHandler.IsHoldingLeftButton()))
+//                cameraYaw += (spinRate * timeDelta);
+//            else if ((input.MouseHandler.PrevMouseState.X < input.MouseHandler.MouseState.X) &&
+//                (input.MouseHandler.IsHoldingLeftButton()))
+//                cameraYaw -= (spinRate * timeDelta);
+//            if ((input.MouseHandler.PrevMouseState.Y > input.MouseHandler.MouseState.Y) &&
+//                (input.MouseHandler.IsHoldingLeftButton()))
+//                cameraPitch += (spinRate * timeDelta);
+//            else if ((input.MouseHandler.PrevMouseState.Y < input.MouseHandler.MouseState.Y) &&
+//                (input.MouseHandler.IsHoldingLeftButton()))
+//                cameraPitch -= (spinRate * timeDelta);
+//#endif
 
             if (cameraYaw > 360)
                 cameraYaw -= 360;
@@ -126,6 +152,80 @@ namespace second3d
             Matrix.CreateLookAt(ref cameraPosition, ref cameraTarget, ref cameraUpVector, out view);
 
             base.Update(gameTime);
+        }
+
+        /// <summary>
+        /// Handles input for moving the camera.
+        /// </summary>
+        public void UpdateCamera(GameTime gameTime)
+        {
+            float time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            // should we reset the camera?
+            if (input.KeyboardHandler.IsKeyDown(Keys.R))
+            {
+                cameraArc = CameraDefaultArc;
+                cameraDistance = CameraDefaultDistance;
+                cameraRotation = CameraDefaultRotation;
+            }
+
+            // Check for input to rotate the camera up and down around the model.
+            if (input.KeyboardHandler.IsKeyDown(Keys.Up) ||
+                input.KeyboardHandler.IsKeyDown(Keys.W))
+            {
+                cameraArc += time * CameraRotateSpeed;
+            }
+
+            if (input.KeyboardHandler.IsKeyDown(Keys.Down) ||
+                input.KeyboardHandler.IsKeyDown(Keys.S))
+            {
+                cameraArc -= time * CameraRotateSpeed;
+            }
+
+            //cameraArc += currentGamePadState.ThumbSticks.Right.Y * time *
+            //    CameraRotateSpeed;
+
+            // Limit the arc movement.
+            cameraArc = MathHelper.Clamp(cameraArc, -90.0f, 90.0f);
+
+            // Check for input to rotate the camera around the model.
+            if (input.KeyboardHandler.IsKeyDown(Keys.Right) ||
+                input.KeyboardHandler.IsKeyDown(Keys.D))
+            {
+                cameraRotation += time * CameraRotateSpeed;
+            }
+
+            if (input.KeyboardHandler.IsKeyDown(Keys.Left) ||
+                input.KeyboardHandler.IsKeyDown(Keys.A))
+            {
+                cameraRotation -= time * CameraRotateSpeed;
+            }
+
+            //cameraRotation += currentGamePadState.ThumbSticks.Right.X * time *
+            //    CameraRotateSpeed;
+
+            // Check for input to zoom camera in and out.
+            if (input.KeyboardHandler.IsKeyDown(Keys.Z))
+                cameraDistance += time * CameraZoomSpeed;
+
+            if (input.KeyboardHandler.IsKeyDown(Keys.X))
+                cameraDistance -= time * CameraZoomSpeed;
+
+            //cameraDistance += currentGamePadState.Triggers.Left * time
+            //    * CameraZoomSpeed;
+            //cameraDistance -= currentGamePadState.Triggers.Right * time
+            //    * CameraZoomSpeed;
+
+            // clamp the camera distance so it doesn't get too close or too far away.
+            cameraDistance = MathHelper.Clamp(cameraDistance,
+                CameraMinDistance, CameraMaxDistance);
+
+            Matrix unrotatedView = Matrix.CreateLookAt(
+                new Vector3(0, 0, -cameraDistance), Vector3.Zero, Vector3.Up);
+
+            view = Matrix.CreateRotationY(MathHelper.ToRadians(cameraRotation)) *
+                          Matrix.CreateRotationX(MathHelper.ToRadians(cameraArc)) *
+                          unrotatedView;
         }
     }
 }
